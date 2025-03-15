@@ -1,106 +1,125 @@
-# GitHub Repository Analysis
+# GitHub Repository Analysis Tool
 
-Analyze GitHub repositories and their commit histories using Ollama with Qwen 2.5.
+A tool for analyzing GitHub repositories using Model Context Protocol (MCP) and LLM-powered insights.
 
 ## Features
 
-- 🎯 Interactive CLI with arrow key navigation
+- 🔍 Repository information analysis
 - 🔄 Commit history analysis
-- 📊 Repository statistics
-- 🔍 Custom analysis queries
-- 🎨 Beautiful terminal interface
+- 🤖 AI-powered insights using Ollama
+- 🎨 Beautiful command-line interface
+- 🔌 MCP-based client-server architecture
 
-## Project Structure
+## Architecture
 
-```
-github-analysis/
-├── github_analysis/       # Source code directory
-│   ├── __init__.py       # Package initialization
-│   ├── main.py           # Main application code
-│   └── exceptions.py     # Custom exceptions
-├── .python-version       # Python version specification (3.12.0)
-├── pyproject.toml        # Project metadata and dependencies
-└── uv.lock              # Locked dependencies
-```
+The application uses a client-server architecture based on the Model Context Protocol (MCP):
 
-## Setup
+- **Server**: Provides tools for fetching GitHub data through a standardized MCP interface
+  - `get_repo_info`: Fetches repository information
+  - `get_commit_history`: Fetches commit history
 
-1. Install `uv`:
+- **Client**: Connects to the server and provides analysis features
+  - Communicates with the server using MCP's stdio transport
+  - Uses Ollama for AI-powered analysis
+  - Provides an interactive command-line interface
+
+## Prerequisites
+
+- Python 3.10 or higher
+- [Ollama](https://ollama.ai) installed with the `qwen2.5:7b` model
+- GitHub personal access token (for higher API rate limits)
+
+## Installation
+
+1. Clone the repository:
 ```bash
-pip install uv
+git clone https://github.com/yourusername/github-analysis.git
+cd github-analysis
 ```
 
-2. Set up development environment:
+2. Create and activate a virtual environment:
 ```bash
-# Create virtual environment with Python 3.12
-uv venv
-
-# Activate it
-source .venv/bin/activate  # Unix/macOS
-# or
-.venv\Scripts\activate    # Windows
-
-# Install dependencies
-uv sync
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-## Managing Dependencies
-
-Add new packages:
+3. Install the package:
 ```bash
-# Production dependencies
-uv add requests
-uv add 'ollama>=0.4.7'
-uv add 'questionary>=2.0.1'
-
-# Development dependencies
-uv add --dev ruff
+pip install -e .
 ```
 
-Update dependencies:
+4. Set up your GitHub token (optional but recommended):
 ```bash
-# Update a specific package
-uv add --upgrade package_name
-
-# Update all dependencies
-uv pip compile pyproject.toml --upgrade
+export GITHUB_TOKEN=your_token_here
 ```
 
 ## Usage
 
-1. Set your GitHub token (optional, but recommended):
+The tool can be run in two modes: server and client.
+
+1. First, start the server:
 ```bash
-export GITHUB_TOKEN="your-token-here"
+github-analysis server
 ```
 
-2. Run the analysis with repository information:
+2. Then, in another terminal, run the client:
 ```bash
-github-analysis OWNER REPO
-
-# Example:
-github-analysis microsoft TypeScript
+github-analysis client <owner> <repo>
 ```
 
-3. Interactive Menu:
-   Use arrow keys (↑/↓) to select from:
-   - 🔄 Analyze recent commits
-   - 📊 Analyze repository information
-   - 🔍 Custom analysis prompt
-   - 👋 Exit
+### Analysis Options
 
-Example usage:
-```bash
-# Analyze the TypeScript repository
-github-analysis microsoft TypeScript
+The tool provides three types of analysis:
 
-# Analyze a specific repository
-github-analysis facebook react
-```
+1. **Repository Analysis**: Analyzes repository metadata, languages, and statistics
+2. **Commit Analysis**: Analyzes recent commit history and patterns
+3. **Custom Analysis**: Allows you to ask custom questions about the repository
 
 ## Development
 
-Format and lint code:
-```bash
-ruff format .
-ruff check .
+### Project Structure
+
 ```
+github_analysis/
+├── client/
+│   └── client.py     # MCP client implementation
+├── server/
+│   ├── server.py     # MCP server implementation
+│   └── exceptions.py # Custom exceptions
+└── main.py          # CLI entry point
+```
+
+### Architecture Details
+
+- **MCP Server**:
+  - Implements the Model Context Protocol
+  - Provides tools for GitHub API interaction
+  - Uses stdio transport for communication
+
+- **MCP Client**:
+  - Connects to the server using stdio transport
+  - Manages tool calls and response handling
+  - Integrates with Ollama for analysis
+
+### Adding New Features
+
+1. **New Server Tools**:
+   - Add new functions with the `@mcp.tool()` decorator in `server.py`
+   - Implement the tool's functionality using GitHub's API
+
+2. **New Analysis Types**:
+   - Add new handler methods in the client class
+   - Create appropriate system prompts for Ollama
+   - Update the menu options
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
