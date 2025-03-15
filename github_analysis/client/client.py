@@ -20,13 +20,20 @@ console = Console()
 class GitHubAnalysisClient:
     """Client for GitHub repository analysis."""
 
-    def __init__(self) -> None:
+    def __init__(self, disable_tools: bool = False) -> None:
         """Initialize the client."""
         self.session: ClientSession | None = None
         self.exit_stack = AsyncExitStack()
+        self.disable_tools = disable_tools
 
     async def connect_to_server(self) -> None:
         """Connect to the MCP server and list available tools."""
+        if self.disable_tools:
+            console.print(
+                "[bold yellow]⚠️  Running in Ollama-only mode (tools disabled)[/]"
+            )
+            return
+
         try:
             console.print("[bold green]🔌 Connecting to GitHub Analysis Server...[/]")
 
@@ -78,6 +85,9 @@ class GitHubAnalysisClient:
 
     async def get_repo_info(self, owner: str, repo: str) -> dict[str, Any] | None:
         """Get repository information."""
+        if self.disable_tools:
+            return None
+
         try:
             if not self.session:
                 raise RuntimeError("Not connected to server")
@@ -98,6 +108,9 @@ class GitHubAnalysisClient:
         self, owner: str, repo: str, limit: int = 5
     ) -> dict[str, Any] | None:
         """Get commit history."""
+        if self.disable_tools:
+            return None
+
         try:
             if not self.session:
                 raise RuntimeError("Not connected to server")
@@ -131,6 +144,16 @@ class GitHubAnalysisClient:
 
     async def handle_commit_analysis(self, owner: str, repo: str) -> None:
         """Handle commit analysis workflow."""
+        if self.disable_tools:
+            prompt = f"Analyze the commit history of the GitHub repository {owner}/{repo}. What insights can you provide about common themes, code areas modified, and notable changes?"
+            analysis = self.analyze_with_ollama(
+                prompt,
+                "You are a GitHub repository analyzer. Provide insights about the repository's commit history.",
+            )
+            console.print("\n[bold cyan]📊 Analysis Results:[/]\n")
+            console.print(analysis)
+            return
+
         commits = await self.get_commits(owner, repo)
         if not commits:
             return
@@ -148,6 +171,16 @@ class GitHubAnalysisClient:
 
     async def handle_repo_analysis(self, owner: str, repo: str) -> None:
         """Handle repository analysis workflow."""
+        if self.disable_tools:
+            prompt = f"Analyze the GitHub repository {owner}/{repo}. What insights can you provide about its size, activity level, languages, and notable features?"
+            analysis = self.analyze_with_ollama(
+                prompt,
+                "You are a GitHub repository analyzer. Provide insights about the repository's characteristics.",
+            )
+            console.print("\n[bold cyan]📊 Analysis Results:[/]\n")
+            console.print(analysis)
+            return
+
         repo_info = await self.get_repo_info(owner, repo)
         if not repo_info:
             return
@@ -167,13 +200,23 @@ class GitHubAnalysisClient:
 
     async def handle_custom_analysis(self, owner: str, repo: str) -> None:
         """Handle custom analysis workflow."""
+        prompt = await questionary.text("Enter your analysis prompt:").ask_async()
+        if not prompt:
+            return
+
+        if self.disable_tools:
+            context = f"Repository: {owner}/{repo}\nQuery: {prompt}"
+            analysis = self.analyze_with_ollama(
+                context,
+                "You are a GitHub repository analyzer. Answer questions about the repository to the best of your ability.",
+            )
+            console.print("\n[bold cyan]📊 Analysis Results:[/]\n")
+            console.print(analysis)
+            return
+
         repo_info = await self.get_repo_info(owner, repo)
         commits = await self.get_commits(owner, repo)
         if not repo_info or not commits:
-            return
-
-        prompt = await questionary.text("Enter your analysis prompt:").ask_async()
-        if not prompt:
             return
 
         context = json.dumps({"repo": repo_info, "commits": commits}, indent=2)
@@ -234,9 +277,14 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="GitHub Repository Analysis Tool")
     parser.add_argument("owner", help="Repository owner")
     parser.add_argument("repo", help="Repository name")
+    parser.add_argument(
+        "--disable-tools",
+        action="store_true",
+        help="Disable MCP tools and use Ollama directly",
+    )
     args = parser.parse_args()
 
-    client = GitHubAnalysisClient()
+    client = GitHubAnalysisClient(disable_tools=args.disable_tools)
     try:
         await client.connect_to_server()
         await client.start(args.owner, args.repo)

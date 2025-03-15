@@ -67,6 +67,11 @@ github-analysis server
 github-analysis client <owner> <repo>
 ```
 
+You can also run the client in Ollama-only mode, which bypasses the MCP server and tools:
+```bash
+github-analysis client <owner> <repo> --disable-tools
+```
+
 ### Analysis Options
 
 The tool provides three types of analysis:
@@ -74,6 +79,8 @@ The tool provides three types of analysis:
 1. **Repository Analysis**: Analyzes repository metadata, languages, and statistics
 2. **Commit Analysis**: Analyzes recent commit history and patterns
 3. **Custom Analysis**: Allows you to ask custom questions about the repository
+
+When running in Ollama-only mode (`--disable-tools`), the analysis will be based on general knowledge rather than real-time repository data.
 
 ## Development
 

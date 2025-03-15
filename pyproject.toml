@@ -46,7 +46,7 @@ line-ending = "auto"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "N", "B", "A", "C4", "RUF", "W"]
-ignore = []
+ignore = ["E501"]                                               # Ignore line length violations
 
 [tool.ruff.lint.isort]
 known-first-party = ["github_analysis"]
