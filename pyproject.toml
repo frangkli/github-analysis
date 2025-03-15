@@ -22,6 +22,7 @@ dependencies = [
     "urllib3==2.3.0",
     "questionary>=2.0.1",
     "rich>=13.9.4",
+    "mcp[cli]>=1.4.1",
 ]
 
 [project.scripts]
