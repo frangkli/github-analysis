@@ -35,7 +35,13 @@ def get_repo_info(owner: str, repo: str) -> dict[str, Any]:
             raise GitHubAPIError(
                 f"Failed to fetch repo info: {response.json().get('message')}"
             )
-        return response.json()
+
+        read_me_url = f"https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/main/README.md"
+        read_me_raw = requests.get(read_me_url).text
+
+        combined_response = response.json()
+        combined_response["readme"] = read_me_raw
+        return combined_response
 
 
 @mcp.tool()
