@@ -128,28 +128,33 @@ class GitHubAnalysisClient:
             console.print(f"\n[bold red]❌ Error:[/] {e!s}")
             return None
 
-    def analyze_with_ollama(self, context: str, system_prompt: str) -> str:
+    def analyze_with_ollama(
+        self, system_prompt: str, context="", user_prompt=""
+    ) -> str:
         """Use Ollama to analyze GitHub data."""
         with console.status("[bold green]Analyzing with Ollama...", spinner="moon"):
-            messages = [
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {"role": "user", "content": context},
-            ]
+            messages = [{"role": "system", "content": system_prompt}]
 
-            response = ollama.chat(model="qwen2.5:7b", messages=messages)
+            if context:
+                messages.append({"role": "system", "content": context})
+
+            if user_prompt:
+                messages.append({"role": "user", "content": user_prompt})
+
+            response = ollama.chat(
+                model="qwen2.5:7b", messages=messages, options={"num_ctx": 4000}
+            )
             return response["message"]["content"]
 
     async def handle_commit_analysis(self, owner: str, repo: str) -> None:
         """Handle commit analysis workflow."""
+        system_prompt = f"""
+        Analyze the commit history of the GitHub repository {owner}/{repo}.
+        What insights can you provide about common themes, code areas modified, and notable changes?
+        Please format your response in a clear, structured way.
+        """
         if self.disable_tools:
-            prompt = f"Analyze the commit history of the GitHub repository {owner}/{repo}. What insights can you provide about common themes, code areas modified, and notable changes?"
-            analysis = self.analyze_with_ollama(
-                prompt,
-                "You are a GitHub repository analyzer. Provide insights about the repository's commit history.",
-            )
+            analysis = self.analyze_with_ollama(system_prompt)
             console.print("\n[bold cyan]📊 Analysis Results:[/]\n")
             console.print(analysis)
             return
@@ -159,42 +164,36 @@ class GitHubAnalysisClient:
             return
 
         context = json.dumps(commits, indent=2)
-        system_prompt = """Analyze these GitHub commits and provide insights about:
-        1. Common themes in commit messages
-        2. Code areas frequently modified
-        3. Notable changes or patterns
-        Please format your response in a clear, structured way."""
-
-        analysis = self.analyze_with_ollama(context, system_prompt)
+        analysis = self.analyze_with_ollama(system_prompt, context)
         console.print("\n[bold cyan]📊 Commit Analysis Results:[/]\n")
         console.print(analysis)
 
     async def handle_repo_analysis(self, owner: str, repo: str) -> None:
         """Handle repository analysis workflow."""
+        system_prompt = f"""
+        Analyze this GitHub repository {owner}/{repo}'s information and provide insights about:
+        1. Repository size and activity level
+        2. Main programming languages
+        3. Notable features (stars, forks, etc.)
+        Please format your response in a clear, structured, and concise way.
+        Note that your user have no idea what the repository is like.
+        """
         if self.disable_tools:
-            prompt = f"Analyze the GitHub repository {owner}/{repo}. What insights can you provide about its size, activity level, languages, and notable features?"
-            analysis = self.analyze_with_ollama(
-                prompt,
-                "You are a GitHub repository analyzer. Provide insights about the repository's characteristics.",
-            )
+            analysis = self.analyze_with_ollama(system_prompt)
             console.print("\n[bold cyan]📊 Analysis Results:[/]\n")
             console.print(analysis)
             return
 
+        system_prompt += """
+        Here are some metadata returned by the Github API as well as the README in raw text.
+        Use this to guide your response.
+        """
         repo_info = await self.get_repo_info(owner, repo)
         if not repo_info:
             return
 
         context = json.dumps(repo_info, indent=2)
-        system_prompt = """
-        Analyze this GitHub repository information and provide insights about:
-        1. Repository size and activity level
-        2. Main programming languages
-        3. Notable features (stars, forks, etc.)
-        Please format your response in a clear, structured way.
-        """
-
-        analysis = self.analyze_with_ollama(context, system_prompt)
+        analysis = self.analyze_with_ollama(system_prompt, context)
         console.print("\n[bold cyan]📊 Repository Analysis Results:[/]\n")
         console.print(analysis)
 
@@ -230,23 +229,23 @@ class GitHubAnalysisClient:
 
     async def handle_custom_analysis(self, owner: str, repo: str) -> None:
         """Handle custom analysis workflow."""
-        prompt = await questionary.text("Enter your analysis prompt:").ask_async()
-        if not prompt:
+        system_prompt = f"""
+        You are a GitHub repository analyzer.
+        The user will ask you questions about the repository {owner}/{repo} which they have no knowledge about.
+        Answer questions about the repository to the best of your ability.
+        """
+        user_prompt = await questionary.text("Enter your analysis prompt:").ask_async()
+        if not user_prompt:
             return
 
         if self.disable_tools:
-            context = f"Repository: {owner}/{repo}\nQuery: {prompt}"
-            analysis = self.analyze_with_ollama(
-                context,
-                "You are a GitHub repository analyzer. Answer questions about the repository to the best of your ability.",
-            )
+            analysis = self.analyze_with_ollama(system_prompt, user_prompt=user_prompt)
             console.print("\n[bold cyan]📊 Analysis Results:[/]\n")
             console.print(analysis)
             return
 
-        need_commits = self._needs_commit_info(prompt)
-        need_repo_info = self._needs_repo_info(prompt)
-
+        need_commits = self._needs_commit_info(user_prompt)
+        need_repo_info = self._needs_repo_info(user_prompt)
         context_dict = {}
 
         if need_commits:
@@ -261,7 +260,7 @@ class GitHubAnalysisClient:
                 context_dict["repo"] = repo_info
 
         context = json.dumps(context_dict, indent=2)
-        analysis = self.analyze_with_ollama(context, prompt)
+        analysis = self.analyze_with_ollama(system_prompt, context, user_prompt)
         console.print("\n[bold cyan]📊 Custom Analysis Results:[/]\n")
         console.print(analysis)
 
