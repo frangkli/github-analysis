@@ -198,6 +198,36 @@ class GitHubAnalysisClient:
         console.print("\n[bold cyan]📊 Repository Analysis Results:[/]\n")
         console.print(analysis)
 
+    def _needs_commit_info(self, prompt: str) -> bool:
+        """Infer if commit information is needed based on the prompt."""
+        keywords = [
+            "commit",
+            "change",
+            "diff",
+            "modified",
+            "added",
+            "deleted",
+            "history",
+            "previous",
+            "version",
+            "update",
+        ]
+        return any(keyword in prompt.lower() for keyword in keywords)
+
+    def _needs_repo_info(self, prompt: str) -> bool:
+        """Infer if repository information is needed based on the prompt."""
+        keywords = [
+            "repo",
+            "repository",
+            "project",
+            "codebase",
+            "structure",
+            "directory",
+            "files",
+            "organization",
+        ]
+        return any(keyword in prompt.lower() for keyword in keywords)
+
     async def handle_custom_analysis(self, owner: str, repo: str) -> None:
         """Handle custom analysis workflow."""
         prompt = await questionary.text("Enter your analysis prompt:").ask_async()
@@ -214,12 +244,25 @@ class GitHubAnalysisClient:
             console.print(analysis)
             return
 
-        repo_info = await self.get_repo_info(owner, repo)
-        commits = await self.get_commits(owner, repo)
-        if not repo_info or not commits:
-            return
+        need_commits = self._needs_commit_info(prompt)
+        if need_commits:
+            console.print("[bold green]🔄 Using commit analysis tools...[/]")
+        need_repo_info = self._needs_repo_info(prompt)
+        if need_repo_info:
+            console.print("[bold green]📊 Using repository analysis tools...[/]")
 
-        context = json.dumps({"repo": repo_info, "commits": commits}, indent=2)
+        context_dict = {}
+
+        if need_commits:
+            commits = await self.get_commits(owner, repo)
+            if commits:
+                context_dict["commits"] = commits
+        if need_repo_info:
+            repo_info = await self.get_repo_info(owner, repo)
+            if repo_info:
+                context_dict["repo"] = repo_info
+
+        context = json.dumps(context_dict, indent=2)
         analysis = self.analyze_with_ollama(context, prompt)
         console.print("\n[bold cyan]📊 Custom Analysis Results:[/]\n")
         console.print(analysis)
