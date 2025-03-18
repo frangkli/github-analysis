@@ -245,19 +245,17 @@ class GitHubAnalysisClient:
             return
 
         need_commits = self._needs_commit_info(prompt)
-        if need_commits:
-            console.print("[bold green]🔄 Using commit analysis tools...[/]")
         need_repo_info = self._needs_repo_info(prompt)
-        if need_repo_info:
-            console.print("[bold green]📊 Using repository analysis tools...[/]")
 
         context_dict = {}
 
         if need_commits:
+            console.print("[bold green]🔄 Using commit analysis tools...[/]")
             commits = await self.get_commits(owner, repo)
             if commits:
                 context_dict["commits"] = commits
         if need_repo_info:
+            console.print("[bold green]📊 Using repository analysis tools...[/]")
             repo_info = await self.get_repo_info(owner, repo)
             if repo_info:
                 context_dict["repo"] = repo_info
