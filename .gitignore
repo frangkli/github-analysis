@@ -175,3 +175,6 @@ cython_debug/
 
 # Ollama cache
 .ollama/
+
+# MacOS
+.DS_Store
