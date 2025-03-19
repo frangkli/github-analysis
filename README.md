@@ -1,22 +1,22 @@
 # GitHub Repository Analysis Tool
 
-A tool for analyzing GitHub repositories using Model Context Protocol (MCP) and LLM-powered insights.
+A powerful tool for analyzing GitHub repositories using the Model Context Protocol (MCP) and AI-powered insights from Large Language Models (LLMs).
 
 ## Features
 
-- 🔍 Repository information analysis
-- 🔄 Commit history analysis
-- 🤖 AI-powered insights using Ollama
-- 🎨 Beautiful command-line interface
-- 🔌 MCP-based client-server architecture
+- 🔍 **Repository Information Analysis**: Fetch detailed information about GitHub repositories.
+- 🔄 **Commit History Analysis**: Analyze commit histories to identify patterns and insights.
+- 🤖 **AI-Powered Insights**: Utilize Ollama to generate intelligent responses and analyses based on repository data.
+- 🎨 **Beautiful Command-Line Interface**: Enjoy a user-friendly CLI for seamless interaction.
+- 🔌 **MCP-Based Client-Server Architecture**: Leverage a modular architecture for efficient data fetching and analysis.
 
 ## Architecture
 
-The application uses a client-server architecture based on the Model Context Protocol (MCP):
+The application employs a client-server architecture based on the Model Context Protocol (MCP):
 
-- **Server**: Provides tools for fetching GitHub data through a standardized MCP interface
-  - `get_repo_info`: Fetches repository information
-  - `get_commit_history`: Fetches commit history
+- **Server**: Provides tools for fetching GitHub data through a standardized MCP interface.
+  - `get_repo_info`: Fetches repository information.
+  - `get_commit_history`: Retrieves commit history for analysis.
 
 - **Client**: Connects to the server and provides analysis features
   - Communicates with the server using MCP's stdio transport
@@ -31,27 +31,30 @@ The application uses a client-server architecture based on the Model Context Pro
 
 ## Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/github-analysis.git
-cd github-analysis
-```
+To get started with the GitHub Repository Analysis Tool, follow these steps:
 
-2. Create and activate a virtual environment:
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/frangkli/github-analysis.git
+   cd github-analysis
+   ```
 
-3. Install the package:
-```bash
-pip install -e .
-```
+2. **Set Up Environment and Dependencies**:
+   ```bash
+   uv sync
+   ```
 
-4. Set up your GitHub token (optional but recommended):
-```bash
-export GITHUB_TOKEN=your_token_here
-```
+3. **Activate Virtual Environment**:
+   ```bash
+   source .venv/bin/activate
+   ```
+
+4. **Install Ollama**: Ensure you have [Ollama](https://ollama.ai) installed with the `qwen2.5:7b` model for AI-powered insights.
+
+5. **Set Up GitHub Personal Access Token**: For higher API rate limits, create a GitHub personal access token and set it as an environment variable:
+   ```bash
+   export GITHUB_TOKEN=your_token_here  # On Windows use `set GITHUB_TOKEN=your_token_here`
+   ```
 
 ## Usage
 
@@ -93,7 +96,9 @@ github_analysis/
 ├── server/
 │   ├── server.py     # MCP server implementation
 │   └── exceptions.py # Custom exceptions
-└── main.py          # CLI entry point
+└── main.py           # CLI entry point
+tests/
+└── test_mcp.py       # Some sample tests to test LLM output
 ```
 
 ### Architecture Details
@@ -108,24 +113,19 @@ github_analysis/
   - Manages tool calls and response handling
   - Integrates with Ollama for analysis
 
-### Adding New Features
+## Contributing
 
-1. **New Server Tools**:
+Contributions are welcome. If you have suggestions or improvements, please open an issue or submit a pull request.
+
+- **New Server Tools**:
    - Add new functions with the `@mcp.tool()` decorator in `server.py`
    - Implement the tool's functionality using GitHub's API
 
-2. **New Analysis Types**:
+- **New Analysis Types**:
    - Add new handler methods in the client class
    - Create appropriate system prompts for Ollama
    - Update the menu options
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 
