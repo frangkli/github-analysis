@@ -47,9 +47,9 @@ class TestMessageContextProcessor:
         "user_prompt",
         [
             "Who is the author of this repo?",
-            "Tell me about this repo concisely."
+            "Tell me about this repo concisely.",
             "How does this repo use the MCP protocol?",
-            "How is this repository structured?"
+            "How is this repository structured?",
             "What programming language does this codebase use?",
             "What is the most recent commit about?",
             "Who authored the latest commit and when?",
@@ -67,6 +67,8 @@ class TestMessageContextProcessor:
         user_prompt: str,
     ):
         print("")
+        print("------------------------------------------------")
+        print(f"Query: {user_prompt}")
         print("------------------------------------------------")
         # Connect clients to MCP server
         await client.connect_to_server()
